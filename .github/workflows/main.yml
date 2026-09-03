@@ -1,0 +1,53 @@
+name: Generate English Audio
+
+on:
+  workflow_dispatch:
+    inputs:
+      lesson:
+        description: "Lesson number, for example 01"
+        required: true
+        default: "01"
+
+permissions:
+  contents: write
+
+jobs:
+  generate-audio:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install TTS
+        run: |
+          pip install edge-tts
+
+      - name: Generate MP3 files
+        run: |
+          mkdir -p audio/lesson-${{ github.event.inputs.lesson }}
+
+          edge-tts \
+            --voice en-US-GuyNeural \
+            --rate=-5% \
+            --file lesson-${{ github.event.inputs.lesson }}/conversation.txt \
+            --write-media audio/lesson-${{ github.event.inputs.lesson }}/conversation.mp3
+
+          edge-tts \
+            --voice en-US-GuyNeural \
+            --rate=-5% \
+            --file lesson-${{ github.event.inputs.lesson }}/listening.txt \
+            --write-media audio/lesson-${{ github.event.inputs.lesson }}/listening.mp3
+
+      - name: Save generated audio
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add audio/
+          git commit -m "Generate audio for lesson ${{ github.event.inputs.lesson }}" || echo "No changes"
+          git push

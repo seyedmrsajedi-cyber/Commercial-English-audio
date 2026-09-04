@@ -1,6 +1,11 @@
 name: Generate English Audio
 
 on:
+  push:
+    paths:
+      - 'lesson-*/conversation.txt'
+      - 'lesson-*/listening.txt'
+      - '.github/workflows/main.yml'
   workflow_dispatch:
     inputs:
       lesson:
@@ -18,36 +23,83 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install TTS
+      - name: Install TTS tools
         run: |
           pip install edge-tts
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Detect lessons
+        id: lessons
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "lessons=${{ github.event.inputs.lesson }}" >> "$GITHUB_OUTPUT"
+          else
+            lessons=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -oE '^lesson-[0-9]+' | sort -u | sed 's/lesson-//' | paste -sd' ' -)
+            if [ -z "$lessons" ]; then
+              echo "No lesson text changed; nothing to generate."
+              echo "lessons=" >> "$GITHUB_OUTPUT"
+            else
+              echo "lessons=$lessons" >> "$GITHUB_OUTPUT"
+            fi
+          fi
 
       - name: Generate MP3 files
+        if: steps.lessons.outputs.lessons != ''
+        shell: bash
         run: |
-          mkdir -p audio/lesson-${{ github.event.inputs.lesson }}
+          set -e
+          for lesson in ${{ steps.lessons.outputs.lessons }}; do
+            dir="lesson-$lesson"
+            out="audio/lesson-$lesson"
+            mkdir -p "$out"
 
-          edge-tts \
-            --voice en-US-GuyNeural \
-            --rate=-5% \
-            --file lesson-${{ github.event.inputs.lesson }}/conversation.txt \
-            --write-media audio/lesson-${{ github.event.inputs.lesson }}/conversation.mp3
+            # Conversation: Saeed = warm male voice, Adam = clear male voice.
+            # Slightly slower than normal for beginner learners.
+            if [ -f "$dir/conversation.txt" ]; then
+              rm -f /tmp/conv_*.mp3 /tmp/conv_list.txt
+              i=0
+              while IFS= read -r line || [ -n "$line" ]; do
+                [ -z "$line" ] && continue
+                speaker=""
+                text="$line"
+                case "$line" in
+                  Saeed:*) speaker="saeed"; text="${line#Saeed: }" ;;
+                  Adam:*) speaker="adam"; text="${line#Adam: }" ;;
+                esac
+                if [ "$speaker" = "saeed" ]; then
+                  voice="en-US-GuyNeural"; rate="-5%"
+                else
+                  voice="en-US-JennyNeural"; rate="-5%"
+                fi
+                edge-tts --voice "$voice" --rate="$rate" --text "$text" --write-media "/tmp/conv_$i.mp3"
+                echo "file '/tmp/conv_$i.mp3'" >> /tmp/conv_list.txt
+                i=$((i+1))
+              done < "$dir/conversation.txt"
+              ffmpeg -y -f concat -safe 0 -i /tmp/conv_list.txt -c:a libmp3lame -b:a 128k "$out/conversation.mp3"
+            fi
 
-          edge-tts \
-            --voice en-US-GuyNeural \
-            --rate=-5% \
-            --file lesson-${{ github.event.inputs.lesson }}/listening.txt \
-            --write-media audio/lesson-${{ github.event.inputs.lesson }}/listening.mp3
+            # Listening: one clear male voice, slower for comprehension practice.
+            if [ -f "$dir/listening.txt" ]; then
+              edge-tts --voice en-US-GuyNeural --rate="-10%" --file "$dir/listening.txt" --write-media "$out/listening.mp3"
+            fi
+          done
 
       - name: Save generated audio
+        if: steps.lessons.outputs.lessons != ''
+        shell: bash
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add audio/
-          git commit -m "Generate audio for lesson ${{ github.event.inputs.lesson }}" || echo "No changes"
+          git commit -m "Generate audio for lesson(s) ${{ steps.lessons.outputs.lessons }}" || echo "No changes"
           git push

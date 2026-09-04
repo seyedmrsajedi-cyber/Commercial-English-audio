@@ -1,0 +1,12 @@
+Vahid: Excuse me, how do I get to the terminal office?
+Daniel: Go straight for about two hundred meters, then turn left at the gate.
+Vahid: Is it far from here?
+Daniel: No, not really. It's about a five-minute walk.
+Vahid: Is the office before or after the security building?
+Daniel: Just after it. You'll see a large blue sign on your right.
+Vahid: Great. And where can I park?
+Daniel: There's a parking area behind the office.
+Vahid: Perfect. Is there a reception desk inside?
+Daniel: Yes. Go through the main entrance and it's directly in front of you.
+Vahid: Thanks for your help.
+Daniel: No problem.

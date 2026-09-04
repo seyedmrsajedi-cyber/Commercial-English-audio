@@ -1,0 +1,12 @@
+Receptionist: Good evening. Welcome to the Grand Hotel. How can I help you?
+Saeed: Hi. I have a reservation under the name Karimi.
+Receptionist: Let me check. Yes, a single room for three nights.
+Saeed: That's right. Is breakfast included?
+Receptionist: Yes. Breakfast is from seven to ten on the second floor.
+Saeed: Great. What time is check-out?
+Receptionist: At twelve. May I see your passport, please?
+Saeed: Sure. Here you are.
+Receptionist: Thank you. Your room is 508. The elevator is on your left.
+Saeed: Perfect. Is there a taxi service for the airport tomorrow morning?
+Receptionist: Yes. We can arrange one for you.
+Saeed: Great. Thank you very much.

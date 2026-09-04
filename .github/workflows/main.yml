@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       lesson:
-        description: "Lesson number, for example 01"
+        description: "Lesson number, for example 03"
         required: true
-        default: "01"
+        default: "03"
 
 permissions:
   contents: write
@@ -44,13 +44,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "lessons=${{ github.event.inputs.lesson }}" >> "$GITHUB_OUTPUT"
           else
-            lessons=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -oE '^lesson-[0-9]+' | sort -u | sed 's/lesson-//' | paste -sd' ' -)
-            if [ -z "$lessons" ]; then
-              echo "No lesson text changed; nothing to generate."
-              echo "lessons=" >> "$GITHUB_OUTPUT"
-            else
-              echo "lessons=$lessons" >> "$GITHUB_OUTPUT"
-            fi
+            echo "lessons=03 04 05 06 07 08" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Generate MP3 files
@@ -63,8 +57,6 @@ jobs:
             out="audio/lesson-$lesson"
             mkdir -p "$out"
 
-            # Conversation: Saeed = warm male voice, Adam = clear male voice.
-            # Slightly slower than normal for beginner learners.
             if [ -f "$dir/conversation.txt" ]; then
               rm -f /tmp/conv_*.mp3 /tmp/conv_list.txt
               i=0
@@ -78,8 +70,10 @@ jobs:
                 esac
                 if [ "$speaker" = "saeed" ]; then
                   voice="en-US-GuyNeural"; rate="-5%"
-                else
+                elif [ "$speaker" = "adam" ]; then
                   voice="en-US-JennyNeural"; rate="-5%"
+                else
+                  voice="en-US-GuyNeural"; rate="-5%"
                 fi
                 edge-tts --voice "$voice" --rate="$rate" --text "$text" --write-media "/tmp/conv_$i.mp3"
                 echo "file '/tmp/conv_$i.mp3'" >> /tmp/conv_list.txt
@@ -88,7 +82,6 @@ jobs:
               ffmpeg -y -f concat -safe 0 -i /tmp/conv_list.txt -c:a libmp3lame -b:a 128k "$out/conversation.mp3"
             fi
 
-            # Listening: one clear male voice, slower for comprehension practice.
             if [ -f "$dir/listening.txt" ]; then
               edge-tts --voice en-US-GuyNeural --rate="-10%" --file "$dir/listening.txt" --write-media "$out/listening.mp3"
             fi

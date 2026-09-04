@@ -1,0 +1,12 @@
+Aref: What time do you usually start work?
+Saman: Around eight. I normally arrive a little earlier.
+Aref: What do you do first?
+Saman: I usually check my messages, email, and the operation schedule.
+Aref: Do you call the inspector every morning?
+Saman: Not every morning. I call when there is an inspection or a vessel operation.
+Aref: What do you usually do after lunch?
+Saman: It depends. Sometimes I go to the terminal, and sometimes I stay in the office.
+Aref: What time do you finish work?
+Saman: Usually around five, but on operation days I may stay later.
+Aref: Same here. Operations don't always follow office hours!
+Saman: Exactly. That's part of the job.
